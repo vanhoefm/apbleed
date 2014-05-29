@@ -1031,6 +1031,9 @@ static int wpa_config_parse_eap(const struct parse_data *data,
 			os_free(buf);
 			return -1;
 		}
+
+		printf(">> %s: searching for EAP method %s\n", __FUNCTION__, start);
+		methods[num_methods].name = strdup(start); // Mathy: TODO: free memory
 		methods[num_methods].method = eap_peer_get_type(
 			start, &methods[num_methods].vendor);
 		if (methods[num_methods].vendor == EAP_VENDOR_IETF &&

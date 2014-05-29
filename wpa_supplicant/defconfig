@@ -93,6 +93,9 @@ CONFIG_EAP_MD5=y
 # EAP-MSCHAPv2
 CONFIG_EAP_MSCHAPV2=y
 
+# EAP-SOCKET: send data through socket for heartbleed testing
+CONFIG_EAP_SOCKET=y
+
 # EAP-TLS
 CONFIG_EAP_TLS=y
 

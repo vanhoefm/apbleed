@@ -12,6 +12,8 @@
 #include "eap_common/eap_defs.h"
 
 const struct eap_method * eap_peer_get_eap_method(int vendor, EapType method);
+const struct eap_method * eap_peer_iterate_eap_methods(int vendor, EapType method,
+						       const struct eap_method *prev);
 const struct eap_method * eap_peer_get_methods(size_t *count);
 
 struct eap_method * eap_peer_method_alloc(int version, int vendor,
@@ -88,6 +90,7 @@ int eap_peer_tls_register(void);
 int eap_peer_unauth_tls_register(void);
 int eap_peer_wfa_unauth_tls_register(void);
 int eap_peer_mschapv2_register(void);
+int eap_peer_socket_register(void);
 int eap_peer_peap_register(void);
 int eap_peer_ttls_register(void);
 int eap_peer_gtc_register(void);

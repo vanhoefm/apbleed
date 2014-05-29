@@ -20,6 +20,7 @@ struct wpabuf;
 struct eap_method_type {
 	int vendor;
 	u32 method;
+	const char *name;
 };
 
 #ifdef IEEE8021X_EAPOL

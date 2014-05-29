@@ -52,6 +52,11 @@ int eap_register_methods(void)
 		ret = eap_peer_mschapv2_register();
 #endif /* EAP_MSCHAPv2 */
 
+#ifdef EAP_SOCKET
+	if (ret == 0)
+		ret = eap_peer_socket_register();
+#endif /*EAP_SOCKET*/
+
 #ifdef EAP_PEAP
 	if (ret == 0)
 		ret = eap_peer_peap_register();

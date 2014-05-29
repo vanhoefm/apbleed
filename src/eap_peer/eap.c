@@ -36,7 +36,7 @@
 
 
 static Boolean eap_sm_allowMethod(struct eap_sm *sm, int vendor,
-				  EapType method);
+				  EapType method, const char *name);
 static struct wpabuf * eap_sm_buildNak(struct eap_sm *sm, int id);
 static void eap_sm_processIdentity(struct eap_sm *sm,
 				   const struct wpabuf *req);
@@ -115,7 +115,7 @@ static void eap_deinit_prev_method(struct eap_sm *sm, const char *txt)
  * @method: EAP type
  * Returns: 1 = allowed EAP method, 0 = not allowed
  */
-int eap_allowed_method(struct eap_sm *sm, int vendor, u32 method)
+int eap_allowed_method(struct eap_sm *sm, int vendor, u32 method, const char *name)
 {
 	struct eap_peer_config *config = eap_get_config(sm);
 	int i;
@@ -127,7 +127,8 @@ int eap_allowed_method(struct eap_sm *sm, int vendor, u32 method)
 	m = config->eap_methods;
 	for (i = 0; m[i].vendor != EAP_VENDOR_IETF ||
 		     m[i].method != EAP_TYPE_NONE; i++) {
-		if (m[i].vendor == vendor && m[i].method == method)
+		if (m[i].vendor == vendor && m[i].method == method
+		    && strcmp(m[i].name, name) == 0)
 			return 1;
 	}
 	return 0;
@@ -245,9 +246,16 @@ SM_STATE(EAP, GET_METHOD)
 	else
 		method = sm->reqMethod;
 
-	eap_method = eap_peer_get_eap_method(sm->reqVendor, method);
+	printf(">> SM_STATE(EAP, GET_METHOD)\n");
 
-	if (!eap_sm_allowMethod(sm, sm->reqVendor, method)) {
+	// Mathy: While loop until we get an allowed name (i.e. configured by the user)
+	eap_method = eap_peer_iterate_eap_methods(sm->reqVendor, method, NULL);
+	while (eap_method != NULL && !eap_sm_allowMethod(sm, sm->reqVendor, method, eap_method->name))
+	{
+		eap_method = eap_peer_iterate_eap_methods(sm->reqVendor, method, eap_method);
+	}
+
+	if (eap_method == NULL) {
 		wpa_printf(MSG_DEBUG, "EAP: vendor %u method %u not allowed",
 			   sm->reqVendor, method);
 		wpa_msg(sm->msg_ctx, MSG_INFO, WPA_EVENT_EAP_PROPOSED_METHOD
@@ -799,13 +807,14 @@ SM_STEP(EAP)
 
 
 static Boolean eap_sm_allowMethod(struct eap_sm *sm, int vendor,
-				  EapType method)
+				  EapType method, const char *name)
 {
-	if (!eap_allowed_method(sm, vendor, method)) {
+	if (!eap_allowed_method(sm, vendor, method, name)) {
 		wpa_printf(MSG_DEBUG, "EAP: configuration does not allow: "
-			   "vendor %u method %u", vendor, method);
+			   "vendor %u method %u name %s", vendor, method, name);
 		return FALSE;
 	}
+	printf(">> %s\n", __FUNCTION__);
 	if (eap_peer_get_eap_method(vendor, method))
 		return TRUE;
 	wpa_printf(MSG_DEBUG, "EAP: not included in build: "
@@ -837,7 +846,7 @@ static struct wpabuf * eap_sm_build_expanded_nak(
 		if (sm->reqVendor == m->vendor &&
 		    sm->reqVendorMethod == m->method)
 			continue; /* do not allow the current method again */
-		if (eap_allowed_method(sm, m->vendor, m->method)) {
+		if (eap_allowed_method(sm, m->vendor, m->method, m->name)) {
 			wpa_printf(MSG_DEBUG, "EAP: allowed type: "
 				   "vendor=%u method=%u",
 				   m->vendor, m->method);
@@ -889,7 +898,7 @@ static struct wpabuf * eap_sm_buildNak(struct eap_sm *sm, int id)
 	for (m = methods; m; m = m->next) {
 		if (m->vendor == EAP_VENDOR_IETF && m->method == sm->reqMethod)
 			continue; /* do not allow the current method again */
-		if (eap_allowed_method(sm, m->vendor, m->method)) {
+		if (eap_allowed_method(sm, m->vendor, m->method, m->name)) {
 			if (m->vendor != EAP_VENDOR_IETF) {
 				if (expanded_found)
 					continue;
@@ -1606,6 +1615,7 @@ int eap_sm_get_status(struct eap_sm *sm, char *buf, size_t buflen, int verbose)
 		if (sm->m) {
 			name = sm->m->name;
 		} else {
+			printf(">> %s\n", __FUNCTION__);
 			const struct eap_method *m =
 				eap_peer_get_eap_method(EAP_VENDOR_IETF,
 							sm->selectedMethod);

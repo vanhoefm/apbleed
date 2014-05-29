@@ -431,6 +431,12 @@ MS_FUNCS=y
 CONFIG_IEEE8021X_EAPOL=y
 endif
 
+ifdef CONFIG_EAP_SOCKET
+# Accept/send data through socket
+CFLAGS += -DEAP_SOCKET
+OBJS += ../src/eap_peer/eap_socket.o
+endif
+
 ifdef CONFIG_EAP_GTC
 # EAP-GTC
 ifeq ($(CONFIG_EAP_GTC), dyn)

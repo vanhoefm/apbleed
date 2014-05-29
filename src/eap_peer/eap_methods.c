@@ -28,7 +28,31 @@ static struct eap_method *eap_methods = NULL;
 const struct eap_method * eap_peer_get_eap_method(int vendor, EapType method)
 {
 	struct eap_method *m;
+
+	printf(">> %s\n", __FUNCTION__);
+
 	for (m = eap_methods; m; m = m->next) {
+		if (m->vendor == vendor && m->method == method)
+			return m;
+	}
+	return NULL;
+}
+
+
+/**
+ * eap_peer_get_named_eap_method - Mathy: get EAP method by method, type, and name
+ * @vendor: EAP Vendor-Id (0 = IETF)
+ * @method: EAP type number
+ * @prev:   Previous method returned by this function. Use NULL on first call.
+ * Returns: Pointer to EAP method or %NULL if not found
+ */
+const struct eap_method * eap_peer_iterate_eap_methods(int vendor, EapType method, const struct eap_method *prev)
+{
+	struct eap_method *m;
+
+	printf(">> %s\n", __FUNCTION__);
+
+	for (m = prev ? prev->next : eap_methods; m; m = m->next) {
 		if (m->vendor == vendor && m->method == method)
 			return m;
 	}
@@ -318,9 +342,12 @@ int eap_peer_method_register(struct eap_method *method)
 	    method->version != EAP_PEER_METHOD_INTERFACE_VERSION)
 		return -1;
 
+	// Mathy: multiple handlers can be defined for a (vender, method) pair.
+	// The config file will pick a unique handler based on the name (for
+	// example EAP vs SOCKET).
 	for (m = eap_methods; m; m = m->next) {
-		if ((m->vendor == method->vendor &&
-		     m->method == method->method) ||
+		if (m->vendor == method->vendor &&
+		    m->method == method->method &&
 		    os_strcmp(m->name, method->name) == 0)
 			return -2;
 		last = m;

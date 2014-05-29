@@ -12,7 +12,11 @@ The default .config in this repository is sufficient for normal heartbleed testi
 
 ## Usage
 
-You start it the same way as any wpa_supplicant session. Modify `example.conf` to specify which server you want to test. The example config file will attempt to connect to the `eduroam` network and test the radius server of `example.com` (which of course does not exist):
+You being the same way as any wpa_supplicant session. That means:
+
+	sudo ./wpa_supplicant -Dnl80211 -iwlan0 -cexample.conf
+
+Modify `example.conf` to specify the AP you want to test. The example config file will attempt to connect to [eduroam](https://www.eduroam.org/) and test the radius server of `example.com` (which does not exist):
 
 	network={
 	    # 1. Filters to specify which network to test
@@ -26,7 +30,7 @@ You start it the same way as any wpa_supplicant session. Modify `example.conf` t
 	    eap=SOCKET
 	}
 
-It's that simple. In general take the configuration file of a network and change the line `eap=XXXX` to `eap=SOCKET` and you are good to go. Once connected it will open a socket to which you must connect.
+In general take the configuration file of a network and change the line `eap=XXXX` to `eap=SOCKET` and you are good to go. Once connected it will open a socket to which you must connect.
 
 	wlan2: CTRL-EVENT-EAP-PROPOSED-METHOD vendor=0 method=25
 	>> eap_socket_init

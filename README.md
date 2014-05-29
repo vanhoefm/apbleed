@@ -12,7 +12,7 @@ The default .config in this repository is sufficient for normal heartbleed testi
 
 ## Usage
 
-You being the same way as any wpa_supplicant session. That means:
+You begin the same way as any wpa_supplicant session. That means:
 
 	sudo ./wpa_supplicant -Dnl80211 -iwlan0 -cexample.conf
 
@@ -52,9 +52,10 @@ You can now use **any heartbleed tool** to test the server. For example with [he
 The code has not been tested for reliability. Patches are welcome. Possible improvements:
 
 1. Detect the inner EAP method the server is expecting, and use that.
-2. Improved error handling.
-3. Improved packet forwarding.
-4. ...
+2. Write the packets incapculsated in the EAP requests and responses to a .pcap file.
+3. Improved error handling.
+4. Improved packet forwarding.
+5. ...
 
 # Testing Clients
 

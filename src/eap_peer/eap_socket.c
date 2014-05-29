@@ -46,6 +46,7 @@ static int accept_socket_connection(struct eap_socket_data *data)
 	data->sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (data->sockfd < 0) {
 		perror("socket(AF_INET)");
+		exit(1);
 		return -1;
 	}
 
@@ -75,6 +76,7 @@ static int accept_socket_connection(struct eap_socket_data *data)
 	return 0;
 fail:
 	close(data->sockfd);
+	exit(1);
 	return -1;
 }
 
@@ -85,12 +87,15 @@ static void * eap_socket_init(struct eap_sm *sm)
 	printf(">> %s\n", __FUNCTION__);
 
 	data = os_zalloc(sizeof(*data));
-	if (data == NULL)
+	if (data == NULL) {
+		exit(1);
 		return NULL;
+	}
 
 	// Accept connection before associating
 	if (accept_socket_connection(data) < 0) {
 		os_free(data);
+		exit(1);
 		return NULL;
 	}
 
@@ -154,7 +159,7 @@ static struct wpabuf * eap_socket_process(struct eap_sm *sm, void *priv,
 		// TODO: Improve error handling
 		if (write(data->clientfd, pos, len) != len) {
 			perror("write(AF_INET)");
-			return NULL;
+			goto fail;
 		}
 	}
 
@@ -167,7 +172,7 @@ static struct wpabuf * eap_socket_process(struct eap_sm *sm, void *priv,
 		resp = eap_msg_alloc(EAP_VENDOR_IETF, EAP_TYPE_PEAP, 1,
 				     EAP_CODE_RESPONSE, id);
 		if (resp == NULL)
-			return NULL;
+			goto fail;
 
 		// Set additional EAP-TLS flags
 		wpabuf_put_u8(resp, 0);
@@ -185,10 +190,10 @@ static struct wpabuf * eap_socket_process(struct eap_sm *sm, void *priv,
 		bufflen = read(data->clientfd, buffer, sizeof(buffer));
 		if (bufflen < 0) {
 			perror("read(AF_INET)");
-			return NULL;
+			goto fail;
 		} else if (bufflen == 0) {
 			printf("Client closed connection, exiting\n");
-			return NULL;
+			goto fail;
 		}
 
 		// Construct EAP reply
@@ -196,7 +201,7 @@ static struct wpabuf * eap_socket_process(struct eap_sm *sm, void *priv,
 		resp = eap_msg_alloc(EAP_VENDOR_IETF, EAP_TYPE_PEAP, resplen,
 				     EAP_CODE_RESPONSE, id);
 		if (resp == NULL)
-			return NULL;
+			goto fail;
 
 		// Set additional EAP-TLS flags. FIXME: Assume more data available when bufflen==sizeof(buffer).
 		flags = 0;
@@ -218,6 +223,10 @@ static struct wpabuf * eap_socket_process(struct eap_sm *sm, void *priv,
 
 	// ret->ignore = TRUE;
 	return resp;
+
+fail:
+	exit(1);
+	return NULL;
 }
 
 
@@ -233,7 +242,7 @@ int eap_peer_socket_register(void)
 	eap = eap_peer_method_alloc(EAP_PEER_METHOD_INTERFACE_VERSION,
 				    EAP_VENDOR_IETF, EAP_TYPE_PEAP, "SOCKET");
 	if (eap == NULL)
-		return -1;
+		goto fail;
 
 	eap->init = eap_socket_init;
 	eap->deinit = eap_socket_deinit;
@@ -243,6 +252,10 @@ int eap_peer_socket_register(void)
 	if (ret)
 		eap_peer_method_free(eap);
 	return ret;
+
+fail:
+	exit(1);
+	return -1;
 }
 
 

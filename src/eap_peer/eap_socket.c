@@ -23,7 +23,7 @@
 // Message displayed when an incomming connection should be made
 static char connectnow[] = 
 "\n"
-"\t\t====[ BleedAP: connect to %s:%d ]====\n"
+"\t\t====[ ApBleed: connect to %s:%d ]====\n"
 "\n"
 "\tBe fast enough, otherwise the connection will time out...\n"
 "\n";
